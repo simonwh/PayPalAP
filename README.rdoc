@@ -1,0 +1,47 @@
+= PayPal Adaptive Payments PHP Class
+
+This is a PHP class i made for myself to use in a project I'm working on. It is a work in progress. My goal is to make the API as simple to use as possible while keeping it customizable.
+
+== Usage examples
+
+=== Doing a simple payment
+
+    PayPalAP::setAuth('my_api_username', 'my_api_password', 'my_api_signature'); // I'm not passing in an environment, which will default it to sandbox mode.
+    $options = array(
+        'cancelUrl' => 'http://my_cancel_url',
+        'returnUrl' => 'http://my_return_url',
+        'currencyCode' => 'USD',
+        'receiverEmailArray' => array('receiver_of_funds'),
+        'receiverAmountArray' => array('15'),
+        'ipnNotificationUrl' => 'http://my_ipn_listener_url'
+    );
+    $response = PayPalAPI::doPayment($options); // If the options is valid, the user is redirected to PayPal to do the payment (and there will be nothing to read in the $response variable). If not, the errors will be returned from the function.
+
+=== Handling the IPN from PayPal
+
+Because of PayPal's silly naming scheme of the Adaptive Payments IPN values, you cannot read the IPN content from the $_POST global.
+
+Instead, you will have to collect the raw data and create an array. This array can then be passed to our class function.
+
+==== Creating the array with POST content
+
+    $raw_post_data = file_get_contents('php://input');
+    $raw_post_array = explode('&', $raw_post_data);
+    
+    $data_array = array();
+    foreach($raw_post_array as $keyval) {
+        $data = explode("=", $keyval);
+        if(count($data) == 2){
+            $data_array[$data[0]] = urldecode($data[1]);
+        }
+    }
+
+Now we have a simple array with keys and values. Time to pass it to the IPN handler in our class.
+
+==== Handling the IPN
+
+    if(PayPalAP::handleIpn($data_array)) {
+    	// Payment is verified. Check if this payment has been processed before etc. before taking any actions.
+    } else {
+    	// Payment is not verified. Log this incident and discard.
+    }
