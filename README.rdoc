@@ -32,7 +32,7 @@ Instead, you will have to collect the raw data and create an array. This array c
     foreach($raw_post_array as $keyval) {
         $data = explode("=", $keyval);
         if(count($data) == 2){
-            $data_array[$data[0]] = urldecode($data[1]);
+            $data_array[urldecode($data[0])] = urldecode($data[1]);
         }
     }
 
